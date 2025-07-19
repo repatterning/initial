@@ -1,15 +1,14 @@
 """Module points.py"""
 import logging
 import os
-import boto3
 
 import dask
 import pandas as pd
 
 import config
-import src.data.special
 import src.elements.partitions as pr
 import src.functions.directories
+import src.functions.objects
 import src.functions.streams
 
 
@@ -21,20 +20,18 @@ class Points:
     The time series data.
     """
 
-    def __init__(self, connector: boto3.session.Session, period: str):
+    def __init__(self, period: str):
         """
 
-        :param connector: A boto3 session instance, it retrieves the developer's <default> Amazon
-                          Web Services (AWS) profile details, which allows for programmatic interaction with AWS.
         :param period: The data acquisition chunk size, vis-à-vis time
         """
 
         self.__configurations = config.Config()
 
         # An instance for reading & writing JSON (JavaScript Object Notation) objects, CSV, ...
+        self.__objects = src.functions.objects.Objects()
         self.__streams = src.functions.streams.Streams()
         self.__directories = src.functions.directories.Directories()
-        self.__special = src.data.special.Special(connector=connector)
 
         # The uniform resource locator, data columns, etc.
         self.__url = ('https://timeseries.sepa.org.uk/KiWIS/KiWIS?service=kisters&type=queryServices&datasource=0'
@@ -54,7 +51,7 @@ class Points:
         :return:
         """
 
-        parts = self.__special.exc(url=url)
+        parts = self.__objects.api(url=url)
 
         # The data in data frame form
         columns = parts[0]['columns'].split(',')
